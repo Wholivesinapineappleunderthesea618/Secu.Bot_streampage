@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ESP32 Smoke Detector</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; }
+  .controller { display: grid; grid-template-areas: 
+    "up up up"
+    "left center right"
+    "down down down";
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  button { padding: 15px 25px; font-size: 18px; }
+  .up { grid-area: up; }
+  .down { grid-area: down; }
+  .left { grid-area: left; }
+  .right { grid-area: right; }
+  .center { grid-area: center; }
+  .video-container { margin: 20px 0; }
+</style>
+</head>
+<body>
+<h1>ESP32 Smoke Detector</h1>
+<div class="controller">
+  <button class="up" ontouchstart="sendRequest('/forward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/forward')" onmouseup="sendRequest('/stop')">^</button>
+  <button class="left" ontouchstart="sendRequest('/left')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/left')" onmouseup="sendRequest('/stop')"><</button>
+  <button class="center" onclick="sendRequest('/stop')">stop</button>
+  <button class="right" ontouchstart="sendRequest('/right')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/right')" onmouseup="sendRequest('/stop')">></button>
+  <button class="down" ontouchstart="sendRequest('/backward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/backward')" onmouseup="sendRequest('/stop')">v</button>
+</div>
+<p><button onclick="sendRequest('/restart')">Restart ESP32</button></p>
+<h2>Smoke Levels</h2>
+<p>Analog Value: <span id="analogValue">0</span> ppm</p>
+<p>Digital Value: <span id="digitalValue">0</span></p>
+<h2>Video Stream</h2>
+<div class="video-container">
+  <video id="cam1" width="320" height="240" autoplay controls>
+    <source src="http://192.168.68.58" type="video/mp4">
+  </video>
+</div>
+<script>
+  function sendRequest(url) {
+    console.log("Sending request to: " + url);
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.send();
+  }
+
+  function fetchSmokeData() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/smoke", true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          console.log("Fetched data: ", data);
+          document.getElementById("analogValue").innerText = data.analogValue;
+          document.getElementById("digitalValue").innerText = data.digitalValue;
+        } else {
+          console.error("Failed to fetch data. Status: " + xhr.status);
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  function loadVideo(videoId, url) {
+    var video = document.getElementById(videoId);
+    video.src = url;
+    video.onerror = function() {
+      console.error("Failed to load video stream from " + url);
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    loadVideo('cam1', 'http://192.168.68.58');
+  });
+
+  setInterval(fetchSmokeData, 1000); // Fetch data every second
+</script>
+
+</body>
+</html>
