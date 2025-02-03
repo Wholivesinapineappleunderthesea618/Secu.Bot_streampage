@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ESP32 Smoke Detector</title>
+<title>ESP32 car controller</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; }
   .controller { display: grid; grid-template-areas: 
@@ -22,7 +22,7 @@
 </style>
 </head>
 <body>
-<h1>ESP32 Smoke Detector</h1>
+<h1>ESP32 car controller</h1>
 <div class="controller">
   <button class="up" ontouchstart="sendRequest('/forward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/forward')" onmouseup="sendRequest('/stop')">^</button>
   <button class="left" ontouchstart="sendRequest('/left')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/left')" onmouseup="sendRequest('/stop')"><</button>
@@ -31,15 +31,18 @@
   <button class="down" ontouchstart="sendRequest('/backward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/backward')" onmouseup="sendRequest('/stop')">v</button>
 </div>
 <p><button onclick="sendRequest('/restart')">Restart ESP32</button></p>
+  
 <h2>Smoke Levels</h2>
 <p>Analog Value: <span id="analogValue">0</span> ppm</p>
 <p>Digital Value: <span id="digitalValue">0</span></p>
+  
 <h2>Video Stream</h2>
 <div class="video-container">
   <video id="cam1" width="320" height="240" autoplay controls>
     <source src="http://192.168.68.58" type="video/mp4">
   </video>
 </div>
+  
 <script>
   function sendRequest(url) {
     console.log("Sending request to: " + url);
@@ -66,6 +69,24 @@
     xhr.send();
   }
 
+    function fetchTempHumidData() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/TempHumid", true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          console.log("Fetched data: ", data);
+          document.getElementById("temperature").innerText = data.temperature;
+          document.getElementById("humidity").innerText = data.humidity;
+        } else {
+          console.error("Failed to fetch data. Status: " + xhr.status);
+        }
+      }
+    };
+    xhr.send();
+  }
+
   function loadVideo(videoId, url) {
     var video = document.getElementById(videoId);
     video.src = url;
@@ -79,6 +100,8 @@
   });
 
   setInterval(fetchSmokeData, 1000); // Fetch data every second
+  setInterval(fetchTempHumidData, 1000); // Fetch data every second
+
 </script>
 
 </body>
