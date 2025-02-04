@@ -44,6 +44,19 @@
 </div>
   
 <script>
+  <!--//try websocket-->
+  let socket = new WebSocket("ws://192.168.68.57:81");
+
+  socket.onopen = function() {
+      console.log("WebSocket connection established");
+  };
+
+  socket.onmessage = function(event) {
+      console.log("Message from ESP32: " + event.data);
+
+
+
+  
   function sendRequest(url) {
     console.log("Sending request to: " + url);
     var xhr = new XMLHttpRequest();
