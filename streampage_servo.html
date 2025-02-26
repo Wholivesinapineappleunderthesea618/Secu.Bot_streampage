@@ -23,6 +23,7 @@
 </head>
 <body>
 <h1>ESP32 car servo only controller</h1>
+<h1></h1>192.168.99.130</h1>
 <div class="controller">
   <button class="up" ontouchstart="sendRequest('/forward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/forward')" onmouseup="sendRequest('/stop')">^</button>
   <button class="left" ontouchstart="sendRequest('/left')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/left')" onmouseup="sendRequest('/stop')"><</button>
@@ -34,7 +35,7 @@
   
 <script>
   function sendRequest(endpoint) {
-    const ESP32_IP = 'http://192.168.20.130'; // Replace with your ESP32 IP address
+    const ESP32_IP = 'http://192.168.99.130'; // Replace with your ESP32 IP address
     fetch(`${ESP32_IP}${endpoint}`)
       .then(response => response.text())
       .then(data => console.log(data))
