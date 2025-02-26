@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ESP32 car controller</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; }
+  .controller { display: grid; grid-template-areas: 
+    "up up up"
+    "left center right"
+    "down down down";
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  button { padding: 15px 25px; font-size: 18px; }
+  .up { grid-area: up; }
+  .down { grid-area: down; }
+  .left { grid-area: left; }
+  .right { grid-area: right; }
+  .center { grid-area: center; }
+  .video-container { margin: 20px 0; }
+</style>
+</head>
+<body>
+<h1>ESP32 car controller</h1>
+<div class="controller">
+  <button class="up" ontouchstart="sendRequest('/forward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/forward')" onmouseup="sendRequest('/stop')">^</button>
+  <button class="left" ontouchstart="sendRequest('/left')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/left')" onmouseup="sendRequest('/stop')"><</button>
+  <button class="center" onclick="sendRequest('/stop')">stop</button>
+  <button class="right" ontouchstart="sendRequest('/right')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/right')" onmouseup="sendRequest('/stop')">></button>
+  <button class="down" ontouchstart="sendRequest('/backward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/backward')" onmouseup="sendRequest('/stop')">v</button>
+</div>
+<p><button onclick="sendRequest('/restart')">Restart ESP32</button></p>
+  
+  
+<script>
+  
+  function sendRequest(url) {
+  fetch(url)
+    .then(response => response.text())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));
+}
+
+// Example usage:
+// sendRequest('http://<ESP32_IP_ADDRESS>/forward');
+
+
+</script>
+
+</body>
+</html>
