@@ -32,20 +32,14 @@
 </div>
 <p><button onclick="sendRequest('/restart')">Restart ESP32</button></p>
   
-  
 <script>
-  
-  function sendRequest(url) {
-  fetch(url)
-    .then(response => response.text())
-    .then(data => console.log(data))
-    .catch(error => console.error('Error:', error));
-}
-
-// Example usage:
-// sendRequest('http://<ESP32_IP_ADDRESS>/forward');
-
-
+  function sendRequest(endpoint) {
+    const ESP32_IP = 'http://192.168.20.130'; // Replace with your ESP32 IP address
+    fetch(`${ESP32_IP}${endpoint}`)
+      .then(response => response.text())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error:', error));
+  }
 </script>
 
 </body>
