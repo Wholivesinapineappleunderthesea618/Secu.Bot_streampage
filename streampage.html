@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ESP32 car controller</title>
+<title>ESP32 Car Controller</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; }
   .controller { display: grid; grid-template-areas: 
@@ -19,10 +19,46 @@
   .right { grid-area: right; }
   .center { grid-area: center; }
   .video-container { margin: 20px 0; }
+
+  .video-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  video {
+    width: 320px;
+    height: 240px;
+  }
+
+
+  .ip-options {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 20px;
+  }
+
+  .ip-options button {
+    margin: 5px 0;
+    padding: 10px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .ip-options .selected {
+    background-color: #007BFF;
+    color: white;
+  }
+
 </style>
 </head>
 <body>
-<h1>ESP32 car controller</h1>
+
+<h1>ESP32 Car Controller</h1>
 <div class="controller">
   <button class="up" ontouchstart="sendRequest('/forward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/forward')" onmouseup="sendRequest('/stop')">^</button>
   <button class="left" ontouchstart="sendRequest('/left')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/left')" onmouseup="sendRequest('/stop')"><</button>
@@ -31,38 +67,117 @@
   <button class="down" ontouchstart="sendRequest('/backward')" ontouchend="sendRequest('/stop')" onmousedown="sendRequest('/backward')" onmouseup="sendRequest('/stop')">v</button>
 </div>
 <p><button onclick="sendRequest('/restart')">Restart ESP32</button></p>
-  
+
 <h2>Smoke Levels</h2>
 <p>Analog Value: <span id="analogValue">0</span> ppm</p>
 <p>Digital Value: <span id="digitalValue">0</span></p>
-  
-<h2>Video Stream</h2>
-<div class="video-container">
-  <video id="cam1" width="320" height="240" autoplay controls>
-    <source src="http://192.168.68.58" type="video/mp4">
-  </video>
+
+<h2>ESP32S3 CAM Latest Image</h2>
+<div class="image-container">
+  <img id="cam1" src="http://192.168.68.66/capture" alt="ESP32S3 CAM" />
 </div>
-  
+
+
+
+<!-- <div class="ip-options">
+  <button onclick="updateIP('http://192.168.68.54')" class="selected">ESP32S3 CAM 1<br>
+    <img id="cam1-small" width="120" height="90" />
+  </button>
+  <button onclick="updateIP('http://192.168.68.55')">ESP32S3 CAM 2<br>
+    <img id="cam2-small" width="120" height="90" />
+  </button>
+  <button onclick="updateIP('http://192.168.68.68')">ESP32S3 CAM 3<br>
+    <img id="cam3-small" width="120" height="90" />
+  </button>
+</div> -->
+
+<div class="ip-options"></div>
+
+
+<!-- <h2>Resolution</h2>
+<select id="resolution" onchange="changeResolution()">
+  <option value="10">UXGA (1600x1200)</option>
+  <option value="9">SXGA (1280x1024)</option>
+  <option value="8">XGA (1024x768)</option>
+  <option value="7">SVGA (800x600)</option>
+  <option value="6">VGA (640x480)</option>
+  <option value="5">QVGA (320x240)</option>
+  <option value="4">CIF (352x288)</option>
+  <option value="3">HQVGA (240x176)</option>
+  <option value="2">QQVGA (160x120)</option>
+</select> -->
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
-  <!--//try websocket-->
-  let socket = new WebSocket("ws://192.168.68.57:81");
+  const ipAddresses = [
+    { id: "cam1-small", mac: "XX:XX:XX:XX:XX:01", ip: "http://192.168.68.66" },
+    { id: "cam2-small", mac: "XX:XX:XX:XX:XX:02", ip: "http://192.168.68.61" },
+    { id: "cam3-small", mac: "XX:XX:XX:XX:XX:03", ip: "http://192.168.68.53" },
+    { id: "cam3-small", mac: "XX:XX:XX:XX:XX:03", ip: "http://192.168.68.68" },
+  ];
 
-  socket.onopen = function() {
-      console.log("WebSocket connection established");
-  };
+  let ESP32_IP = ipAddresses[0].ip; // Default IP address
 
-  socket.onmessage = function(event) {
-      console.log("Message from ESP32: " + event.data);
+// 10 = UXGA (1600x1200)
+// 9 = SXGA (1280x1024)
+// 8 = XGA (1024x768)
+// 7 = SVGA (800x600)
+// 6 = VGA (640x480)
+// 5 = QVGA (320x240)
+// 4 = CIF (352x288)
+// 3 = HQVGA (240x176)
+// 2 = QQVGA (160x120)
 
+
+  // Remove references to lowResolution and highResolution
+  function createIPButtons() {
+    const ipOptionsDiv = document.querySelector(".ip-options");
+    ipOptionsDiv.innerHTML = ""; // Clear any existing content
+
+    ipAddresses.forEach((camera, index) => {
+      const button = document.createElement("button");
+      button.innerHTML = `ESP32S3 CAM ${index + 1}<br>
+        <img id="${camera.id}" width="120" height="90" />`;
+      button.onclick = () => {
+        updateIP(camera.ip);
+
+        // Highlight the selected button
+        document.querySelectorAll(".ip-options button").forEach(btn => btn.classList.remove("selected"));
+        button.classList.add("selected");
+      };
+
+      if (index === 0) button.classList.add("selected"); // Set default as selected
+      ipOptionsDiv.appendChild(button);
+    });
+  }
+  createIPButtons(); // Create buttons on page load
+
+  function updateIP(ip) {
+    ESP32_IP = ip; // Update the global IP
+    console.log(`Updated ESP32 IP to: ${ESP32_IP}`);
+    refreshImage(); // Refresh the main camera image
+  }
 
 
   
-  function sendRequest(url) {
-    console.log("Sending request to: " + url);
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-    xhr.send();
+  function sendRequest(endpoint) {
+    fetch(`${ESP32_IP}${endpoint}`)
+      .then(response => response.text())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error:', error));
   }
+
+
 
   function fetchSmokeData() {
     var xhr = new XMLHttpRequest();
@@ -82,7 +197,7 @@
     xhr.send();
   }
 
-    function fetchTempHumidData() {
+  function fetchTempHumidData() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "/TempHumid", true);
     xhr.onreadystatechange = function() {
@@ -100,21 +215,27 @@
     xhr.send();
   }
 
-  function loadVideo(videoId, url) {
-    var video = document.getElementById(videoId);
-    video.src = url;
-    video.onerror = function() {
-      console.error("Failed to load video stream from " + url);
-    };
+  function refreshImage() {
+    const img = document.getElementById("cam1");
+    img.src = `${ESP32_IP}/capture?${new Date().getTime()}`; // Force refresh
   }
 
-  document.addEventListener("DOMContentLoaded", function() {
-    loadVideo('cam1', 'http://192.168.68.58');
-  });
+  function refreshSmallImages() {
+    ipAddresses.forEach(camera => {
+      const img = document.getElementById(camera.id); // Get the correct img element by ID
+      if (img) {
+        img.src = `${camera.ip}/capture?${new Date().getTime()}`; // Update the image source to force refresh
+      }
+    });
+  }
+
+
+
 
   setInterval(fetchSmokeData, 1000); // Fetch data every second
   setInterval(fetchTempHumidData, 1000); // Fetch data every second
-
+  setInterval(refreshImage, 500); // Refresh every second
+  setInterval(refreshSmallImages, 300); // Refresh small images every 500 milliseconds
 </script>
 
 </body>
